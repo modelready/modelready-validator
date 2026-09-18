@@ -224,7 +224,10 @@ dropZone.addEventListener('drop', (event) => {
   dropZone.classList.remove('drop-zone--active');
   if (event.dataTransfer?.files?.length) handleFiles(event.dataTransfer.files);
 });
-dropZone.addEventListener('click', () => fileInput.click());
+dropZone.addEventListener('click', (event) => {
+  if (event.target.closest('a')) return; // the "check the source" link, not a request to browse
+  fileInput.click();
+});
 dropZone.addEventListener('keydown', (event) => {
   if (event.key === 'Enter' || event.key === ' ') {
     event.preventDefault();
