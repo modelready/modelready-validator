@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ModelReady — Free 3D Model Marketplace Checker</title>
+  <meta
+    name="description"
+    content="Drop a .glb file and instantly see whether it meets Amazon and Shopify's 3D model requirements. Runs entirely in your browser — nothing is uploaded."
+  />
+  <link rel="canonical" href="https://modelready.click/" />
+  <meta name="theme-color" content="#0f1115" />
+
+  <link rel="icon" type="image/png" sizes="64x64" href="/favicon-64.png" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://modelready.click/" />
+  <meta property="og:title" content="Will your 3D model pass marketplace review?" />
+  <meta
+    property="og:description"
+    content="Free instant check against Amazon & Shopify's 3D model requirements. Runs in your browser — nothing is uploaded."
+  />
+  <meta property="og:image" content="https://modelready.click/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Will your 3D model pass marketplace review?" />
+  <meta
+    name="twitter:description"
+    content="Free instant check against Amazon & Shopify's 3D model requirements. Runs in your browser — nothing is uploaded."
+  />
+  <meta name="twitter:image" content="https://modelready.click/og-image.png" />
+
+  <link rel="stylesheet" href="/styles.css" />
+
+  <!-- Dark is the default theme; this runs before paint so an opted-in light
+       preference (see web/js/theme-toggle.js) never flashes dark first. -->
+  <script>
+    (function () {
+      try {
+        if (localStorage.getItem('theme') === 'light') {
+          document.documentElement.setAttribute('data-theme', 'light');
+        }
+      } catch (e) {
+        /* localStorage unavailable (e.g. private browsing) — dark default stands */
+      }
+    })();
+  </script>
+</head>
+<body>
+  <div class="page-shell">
+    <nav class="topbar">
+      <a class="brand" href="/">
+        <svg class="brand__mark" viewBox="0 0 512 512" aria-hidden="true">
+          <polygon points="256,96 380,168 380,312 256,384 132,312 132,168" fill="currentColor" />
+          <path class="brand__mark-check" d="M198 250 L238 296 L322 196" fill="none" stroke-width="34"
+                stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        <span class="brand__name">ModelReady</span>
+      </a>
+      <div class="topbar__right">
+        <span class="topbar__badge">Free &middot; No signup</span>
+        <button type="button" id="theme-toggle" class="theme-toggle" aria-label="Switch to light theme">🌙</button>
+      </div>
+    </nav>
+
+    <header class="page-header">
+      <h1>Will your 3D model pass marketplace review?</h1>
+      <p class="subtitle">
+        Drop a <code>.glb</code> file below. This free tool checks it against Amazon and Shopify's
+        requirements right in your browser — nothing is uploaded anywhere.
+      </p>
+      <ul class="trust-badges">
+        <li>🔒 Runs in your browser</li>
+        <li>📦 Amazon &amp; Shopify rules</li>
+        <li>⚡ Instant, no signup</li>
+        <li>⏱️ Save your time — skip a failed upload</li>
+      </ul>
+    </header>
+
+    <main>
+      <ol class="steps">
+        <li><span class="steps__num">1</span> Pick a marketplace</li>
+        <li><span class="steps__num">2</span> Drop your .glb file</li>
+        <li><span class="steps__num">3</span> Get an instant report</li>
+      </ol>
+
+      <section class="profile-picker" aria-label="Choose marketplaces to check against">
+        <span class="profile-picker__label">Check against:</span>
+        <label class="chip"><input type="checkbox" name="profile" value="amazon" checked /> Amazon</label>
+        <label class="chip"><input type="checkbox" name="profile" value="shopify" checked /> Shopify</label>
+      </section>
+
+      <section id="drop-zone" class="drop-zone" tabindex="0" aria-label="Drop .glb files here, or click to browse">
+        <svg class="drop-zone__icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 16V4M12 4L7 9M12 4l5 5" fill="none" stroke="currentColor" stroke-width="1.6"
+                stroke-linecap="round" stroke-linejoin="round" />
+          <path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" fill="none" stroke="currentColor"
+                stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        <p class="drop-zone__title">Drag &amp; drop .glb files here</p>
+        <p class="drop-zone__or">or</p>
+        <button type="button" id="browse-button">Browse files</button>
+        <input type="file" id="file-input" accept=".glb" multiple hidden />
+        <p class="drop-zone__sample">
+          No file handy?
+          <button type="button" id="sample-button" class="link-button">Try a sample model</button>
+        </p>
+      </section>
+
+      <section id="report-container" class="report-container" aria-live="polite"></section>
+
+      <section id="waitlist-section" class="waitlist-section" hidden>
+        <h2>Need these fixed and optimized automatically?</h2>
+        <p>
+          We're testing a paid batch auto-fix tool: upload your models, get back files compressed and
+          optimized to pass (roughly $2-5/asset). Join the waitlist and we'll reach out by email — no
+          calls, no account needed.
+        </p>
+        <form id="waitlist-form">
+          <label class="field">
+            <span>Email</span>
+            <input type="email" name="email" required autocomplete="email" placeholder="you@example.com" />
+          </label>
+          <label class="field">
+            <span>Marketplace</span>
+            <select name="marketplace">
+              <option value="">Not sure / other</option>
+              <option value="amazon">Amazon</option>
+              <option value="shopify">Shopify</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>Approx. batch size</span>
+            <input type="text" name="batchSize" placeholder="e.g. 50-100 assets" />
+          </label>
+          <button type="submit">Join waitlist</button>
+          <p class="waitlist-note">
+            Used only to email you about the batch-fix tool. Never shared or sold. To have it
+            deleted, write to <a href="mailto:modelready@proton.me">modelready@proton.me</a>.
+          </p>
+          <p id="waitlist-confirmation" class="confirmation" role="status" hidden></p>
+        </form>
+
+        <div id="intent-section" class="intent-section" hidden>
+          <p>Want priority when the batch-fix tool is ready? Tell us you're ready to pay now:</p>
+          <label class="field field--inline">
+            <span>Amount you'd pay now ($)</span>
+            <input type="number" id="intent-amount" min="1" step="1" placeholder="e.g. 100" />
+          </label>
+          <button type="button" id="intent-button">I will pay this now</button>
+          <p id="intent-confirmation" class="confirmation" role="status" hidden></p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="page-footer">
+      <div class="footer__brand">
+        <svg class="brand__mark brand__mark--small" viewBox="0 0 512 512" aria-hidden="true">
+          <polygon points="256,96 380,168 380,312 256,384 132,312 132,168" fill="currentColor" />
+          <path class="brand__mark-check" d="M198 250 L238 296 L322 196" fill="none" stroke-width="34"
+                stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        <span>ModelReady</span>
+      </div>
+      <p>
+        Free and experimental. Your 3D files never leave your browser: no file contents, names or
+        stats are sent anywhere. The page only counts how many checks run (and which marketplaces
+        were selected), and sends what you type into the waitlist form if you join. Like any
+        website, the server sees standard request details such as IP address.
+        <a href="https://github.com/modelready/modelready-validator">Source code</a>.
+      </p>
+      <p>Questions? <a href="mailto:modelready@proton.me">modelready@proton.me</a></p>
+    </footer>
+  </div>
+
+  <script type="module" src="/js/validator.js"></script>
+  <script type="module" src="/js/waitlist-form.js"></script>
+  <script type="module" src="/js/theme-toggle.js"></script>
+</body>
+</html>

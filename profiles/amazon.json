@@ -1,0 +1,145 @@
+{
+  "id": "amazon",
+  "label": "Amazon",
+  "sourceUrl": "https://sellercentral.amazon.com/help/hub/reference/external/G7RGSNQFZ2BAG7K3",
+  "rules": [
+    {
+      "id": "format",
+      "label": "File format",
+      "verification": "verified",
+      "sourceNote": "Amazon \"3D model technical requirements\" (Seller Central help, publicly readable, checked 2026-09-18): \"We accept assets in .GLB and .glTF file formats\" — GLB is the recommended format.",
+      "comparator": "oneOf",
+      "limit": ["glb", "gltf-separate"],
+      "alternateLimits": [],
+      "warnOnly": false
+    },
+    {
+      "id": "gltf_validator",
+      "label": "Khronos glTF-Validator errors",
+      "verification": "verified",
+      "sourceNote": "Amazon \"3D model technical requirements\": \"The Khronos Group glTF-Validator tool must be used to check that files meet technical requirements.\" This check runs that exact validator.",
+      "comparator": "max",
+      "limit": 0,
+      "alternateLimits": [],
+      "warnOnly": false
+    },
+    {
+      "id": "triangle_count",
+      "label": "Maximum triangle count",
+      "verification": "verified",
+      "sourceNote": "Amazon \"3D model technical requirements\": \"Models should not exceed 200K triangles.\"",
+      "comparator": "max",
+      "limit": 200000,
+      "alternateLimits": [],
+      "warnOnly": false
+    },
+    {
+      "id": "texture_max_size",
+      "label": "Maximum texture resolution",
+      "verification": "verified",
+      "sourceNote": "Amazon \"3D model technical requirements\": textures must be \"no larger than 4K (4,096 x 4,096 pixels)\".",
+      "comparator": "max",
+      "limit": 4096,
+      "alternateLimits": [],
+      "warnOnly": false
+    },
+    {
+      "id": "texture_min_size",
+      "label": "Minimum texture resolution",
+      "verification": "verified",
+      "sourceNote": "Amazon \"3D model technical requirements\": \"Texture resolution should not be less than 2K (2048 px x 2048 px)\".",
+      "comparator": "min",
+      "limit": 2048,
+      "alternateLimits": [],
+      "warnOnly": false
+    },
+    {
+      "id": "texture_shape",
+      "label": "Square, power-of-two textures",
+      "verification": "verified",
+      "sourceNote": "Amazon \"3D model technical requirements\": each texture \"must be square and power of two\".",
+      "comparator": "empty",
+      "limit": null,
+      "alternateLimits": [],
+      "warnOnly": false
+    },
+    {
+      "id": "texture_format",
+      "label": "Texture image format",
+      "verification": "verified",
+      "sourceNote": "Amazon \"3D model technical requirements\": \"We accept texture files in .PNG and .JPG format. We do not accept glTF files with image resources embedded directly in JSON.\"",
+      "comparator": "empty",
+      "limit": ["image/png", "image/jpeg"],
+      "alternateLimits": [],
+      "warnOnly": false
+    },
+    {
+      "id": "required_maps",
+      "label": "Required PBR texture maps",
+      "verification": "verified",
+      "sourceNote": "Amazon \"3D model technical requirements\": all materials are PBR metal-rough; BaseColor, Metallic and Roughness maps are required (in glTF, Metallic and Roughness share one metallicRoughness texture).",
+      "comparator": "empty",
+      "limit": null,
+      "alternateLimits": [],
+      "warnOnly": false
+    },
+    {
+      "id": "scene_extras",
+      "label": "No animations, cameras or lights",
+      "verification": "verified",
+      "sourceNote": "Amazon \"3D model technical requirements\": \"Model should not contain modifiers, animation key frames, cameras or lights.\"",
+      "comparator": "empty",
+      "limit": null,
+      "alternateLimits": [],
+      "warnOnly": false
+    },
+    {
+      "id": "extensions",
+      "label": "Supported glTF extensions only",
+      "verification": "verified",
+      "sourceNote": "Amazon \"3D model technical requirements\": \"Unlisted glTF extensions are not currently supported.\"",
+      "comparator": "empty",
+      "limit": [
+        "KHR_materials_sheen",
+        "KHR_materials_transmission",
+        "KHR_materials_clearcoat",
+        "KHR_materials_ior",
+        "KHR_materials_volume",
+        "KHR_draco_mesh_compression",
+        "KHR_interactivity"
+      ],
+      "alternateLimits": [],
+      "warnOnly": false
+    },
+    {
+      "id": "floor_alignment",
+      "label": "Floor alignment (Y-up, resting on Y=0, centred)",
+      "verification": "verified",
+      "sourceNote": "Amazon \"3D model technical requirements\": floor/tabletop models \"must rest on the Y=0 plane, with all geometry extending into positive Y space\" and are \"centred at the base of the bottom surface in both the X and Z axes\". Wall and ceiling products use different alignments, so this only warns.",
+      "comparator": "aligned",
+      "limit": 0.01,
+      "alternateLimits": [],
+      "warnOnly": true
+    },
+    {
+      "id": "double_sided",
+      "label": "Double-sided materials",
+      "verification": "verified",
+      "sourceNote": "Amazon \"3D model technical requirements\": \"Double-sided textures are not supported.\" Shown as a warning because the exact meaning for glTF's doubleSided flag isn't spelled out.",
+      "comparator": "empty",
+      "limit": null,
+      "alternateLimits": [],
+      "warnOnly": true
+    },
+    {
+      "id": "file_size",
+      "label": "Maximum file size",
+      "verification": "advisory",
+      "sourceNote": "Third-party guides cite a 5 MB maximum for Amazon (e.g. https://blog.neural4d.com/image-to-3d/3d-product-rendering-for-ecommerce-amazon-glb-guide-2026/ and https://maverickframe.com/blog/3d-model-requirements-amazon-wayfair-shopify/, checked 2026-09-18), but Amazon's own \"3D model technical requirements\" page states no file size limit.",
+      "comparator": "max",
+      "limit": 5242880,
+      "alternateLimits": [],
+      "warnOnly": false
+    }
+  ]
+}

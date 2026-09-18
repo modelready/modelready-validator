@@ -1,0 +1,16 @@
+{
+  "name": "modelready-validator",
+  "version": "0.1.0",
+  "description": "Browser-side checker for .glb 3D models against Amazon's and Shopify's published 3D requirements",
+  "private": true,
+  "license": "SEE LICENSE IN LICENSE.md",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node scripts/serve.js",
+    "test": "node --test tests/",
+    "make-demo": "node scripts/make-demo-glb.js"
+  }
+}

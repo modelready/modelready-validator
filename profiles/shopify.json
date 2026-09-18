@@ -1,0 +1,36 @@
+{
+  "id": "shopify",
+  "label": "Shopify",
+  "rules": [
+    {
+      "id": "format",
+      "label": "File format",
+      "verification": "verified",
+      "sourceNote": "help.shopify.com/en/manual/products/product-media/product-media-types (fetched directly): \"File type: GLB, USDZ\".",
+      "comparator": "oneOf",
+      "limit": ["glb", "usdz"],
+      "alternateLimits": [],
+      "warnOnly": false
+    },
+    {
+      "id": "file_size",
+      "label": "Maximum file size",
+      "verification": "verified",
+      "sourceNote": "help.shopify.com/en/manual/products/product-media/product-media-types (fetched directly): \"File size: Up to 500 MB\".",
+      "comparator": "max",
+      "limit": 524288000,
+      "alternateLimits": [],
+      "warnOnly": false
+    },
+    {
+      "id": "auto_optimize_threshold",
+      "label": "Auto-optimization threshold",
+      "verification": "verified",
+      "sourceNote": "help.shopify.com/en/manual/products/product-media/product-media-types (fetched directly): files over 15 MB are automatically optimized on upload (geometry and textures optimized, visual output preserved); files under 15 MB are left unchanged. This is a Shopify behavior, not a rejection, so it warns rather than fails.",
+      "comparator": "max",
+      "limit": 15728640,
+      "alternateLimits": [],
+      "warnOnly": true
+    }
+  ]
+}
