@@ -125,8 +125,27 @@ test('floor alignment and double-sided materials only warn, since they depend on
   assert.match(resultOf(floating, 'floor_alignment').message, /Y=0\.500/);
   assert.equal(statusOf(floating, 'double_sided'), 'warn');
 
-  const offCentre = evaluateProfile(amazon, compliantStats({ bounds: { min: [1, 0, 1], max: [2, 1, 2] } }));
-  assert.equal(statusOf(offCentre, 'floor_alignment'), 'warn');
+  // Without readable vertices (compressed geometry) only Y=0 is checked: the
+  // bounding box is no stand-in for the base, so an off-centre box still passes.
+  const compressedOffCentre = evaluateProfile(amazon, compliantStats({ bounds: { min: [1, 0, 1], max: [2, 1, 2] } }));
+  assert.equal(statusOf(compressedOffCentre, 'floor_alignment'), 'pass');
+  assert.match(resultOf(compressedOffCentre, 'floor_alignment').message, /isn't checked: this file's geometry is compressed/);
+
+  const baseCentredMug = evaluateProfile(amazon, compliantStats({
+    bounds: { min: [-1, 0, -1], max: [2, 2, 1] },
+    floorContact: { minY: 0, baseCentre: [0, 0], contactPoints: 24, source: 'vertices' },
+  }));
+  assert.equal(statusOf(baseCentredMug, 'floor_alignment'), 'pass');
+  assert.equal(
+    resultOf(baseCentredMug, 'floor_alignment').message,
+    'Model rests on Y=0 and its base is centred in X and Z.',
+  );
+
+  const shiftedBase = evaluateProfile(amazon, compliantStats({
+    floorContact: { minY: 0, baseCentre: [0.05, 0], contactPoints: 12, source: 'vertices' },
+  }));
+  assert.equal(statusOf(shiftedBase, 'floor_alignment'), 'warn');
+  assert.match(resultOf(shiftedBase, 'floor_alignment').message, /base centre at X=0\.050/);
 
   // Sub-tolerance floating-point noise is not flagged.
   const nearlyAligned = evaluateProfile(amazon, compliantStats({ bounds: { min: [-0.5, 0.001, -0.5], max: [0.5, 1, 0.5] } }));

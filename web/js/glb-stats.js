@@ -5,6 +5,7 @@
 
 const GLB_MAGIC = 0x46546c67; // ASCII "glTF" read as a little-endian uint32
 const CHUNK_TYPE_JSON = 0x4e4f534a; // ASCII "JSON"
+const CHUNK_TYPE_BIN = 0x004e4942; // ASCII "BIN\0"
 
 const MODE_TRIANGLES = 4;
 const MODE_TRIANGLE_STRIP = 5;
@@ -31,6 +32,32 @@ export function extractGlbJsonChunk(arrayBuffer) {
   } catch {
     return null;
   }
+}
+
+/**
+ * @param {ArrayBuffer} arrayBuffer
+ * @returns {Uint8Array|null} a view of the GLB BIN chunk, or null when absent
+ */
+export function extractGlbBinChunk(arrayBuffer) {
+  if (!arrayBuffer || arrayBuffer.byteLength < 20) return null;
+
+  const view = new DataView(arrayBuffer);
+  if (view.getUint32(0, true) !== GLB_MAGIC) return null;
+
+  const declaredLength = view.getUint32(8, true);
+  const jsonLength = view.getUint32(12, true);
+  const jsonType = view.getUint32(16, true);
+  if (jsonType !== CHUNK_TYPE_JSON || declaredLength > arrayBuffer.byteLength) return null;
+
+  const binHeaderOffset = 20 + jsonLength;
+  if (binHeaderOffset + 8 > declaredLength) return null;
+
+  const binLength = view.getUint32(binHeaderOffset, true);
+  const binType = view.getUint32(binHeaderOffset + 4, true);
+  const binOffset = binHeaderOffset + 8;
+  if (binType !== CHUNK_TYPE_BIN || binOffset + binLength > declaredLength) return null;
+
+  return new Uint8Array(arrayBuffer, binOffset, binLength);
 }
 
 /**

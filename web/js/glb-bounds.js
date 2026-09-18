@@ -112,6 +112,38 @@ function getSceneRoots(gltfJson, nodes) {
   return nodes.map((_, index) => index).filter((index) => !childIndices.has(index));
 }
 
+/** Calls `visit` for each mesh instance in the default scene. */
+export function forEachSceneMesh(gltfJson, visit) {
+  if (!gltfJson || typeof gltfJson !== 'object') return;
+
+  const nodes = Array.isArray(gltfJson.nodes) ? gltfJson.nodes : [];
+  const meshes = Array.isArray(gltfJson.meshes) ? gltfJson.meshes : [];
+
+  function visitNode(nodeIndex, parentMatrix, ancestors) {
+    if (!isValidIndex(nodeIndex, nodes) || ancestors.has(nodeIndex)) return;
+
+    const node = nodes[nodeIndex];
+    const localMatrix = createLocalMatrix(node);
+    if (!localMatrix) return;
+
+    const worldMatrix = multiplyMatrices(parentMatrix, localMatrix);
+    if (!worldMatrix.every(Number.isFinite)) return;
+
+    const nextAncestors = new Set(ancestors);
+    nextAncestors.add(nodeIndex);
+    if (isValidIndex(node.mesh, meshes)) visit(node.mesh, worldMatrix);
+
+    if (!Array.isArray(node.children)) return;
+    for (const childIndex of node.children) {
+      visitNode(childIndex, worldMatrix, nextAncestors);
+    }
+  }
+
+  for (const rootIndex of getSceneRoots(gltfJson, nodes)) {
+    visitNode(rootIndex, IDENTITY_MATRIX, new Set());
+  }
+}
+
 /**
  * @param {object} gltfJson parsed glTF JSON (as returned by extractGlbJsonChunk)
  * @returns {{ min: [number, number, number], max: [number, number, number] } | null}
@@ -120,7 +152,6 @@ function getSceneRoots(gltfJson, nodes) {
 export function computeSceneBounds(gltfJson) {
   if (!gltfJson || typeof gltfJson !== 'object') return null;
 
-  const nodes = Array.isArray(gltfJson.nodes) ? gltfJson.nodes : [];
   const meshes = Array.isArray(gltfJson.meshes) ? gltfJson.meshes : [];
   const accessors = Array.isArray(gltfJson.accessors) ? gltfJson.accessors : [];
   const bounds = {
@@ -130,7 +161,6 @@ export function computeSceneBounds(gltfJson) {
   let hasBounds = false;
 
   function includeMesh(meshIndex, worldMatrix) {
-    if (!isValidIndex(meshIndex, meshes)) return;
     const primitives = Array.isArray(meshes[meshIndex]?.primitives)
       ? meshes[meshIndex].primitives
       : [];
@@ -166,29 +196,7 @@ export function computeSceneBounds(gltfJson) {
     }
   }
 
-  function visitNode(nodeIndex, parentMatrix, ancestors) {
-    if (!isValidIndex(nodeIndex, nodes) || ancestors.has(nodeIndex)) return;
-
-    const node = nodes[nodeIndex];
-    const localMatrix = createLocalMatrix(node);
-    if (!localMatrix) return;
-
-    const worldMatrix = multiplyMatrices(parentMatrix, localMatrix);
-    if (!worldMatrix.every(Number.isFinite)) return;
-
-    const nextAncestors = new Set(ancestors);
-    nextAncestors.add(nodeIndex);
-    includeMesh(node.mesh, worldMatrix);
-
-    if (!Array.isArray(node.children)) return;
-    for (const childIndex of node.children) {
-      visitNode(childIndex, worldMatrix, nextAncestors);
-    }
-  }
-
-  for (const rootIndex of getSceneRoots(gltfJson, nodes)) {
-    visitNode(rootIndex, IDENTITY_MATRIX, new Set());
-  }
+  forEachSceneMesh(gltfJson, includeMesh);
 
   return hasBounds ? bounds : null;
 }

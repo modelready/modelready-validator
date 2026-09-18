@@ -1,10 +1,12 @@
 import {
   countTriangles,
+  extractGlbBinChunk,
   extractGlbJsonChunk,
   findDoubleSidedMaterials,
   findMaterialsMissingPbrMaps,
   findSceneExtras,
 } from './glb-stats.js';
+import { computeFloorContact } from './glb-base.js';
 import { computeSceneBounds } from './glb-bounds.js';
 import { evaluateProfile } from './profiles.js';
 
@@ -171,6 +173,7 @@ async function processFile(file, { demo = false } = {}) {
       sceneExtras: findSceneExtras(gltfJson),
       extensionsUsed: gltfJson.extensionsUsed || [],
       bounds: computeSceneBounds(gltfJson),
+      floorContact: computeFloorContact(gltfJson, extractGlbBinChunk(arrayBuffer)),
       doubleSidedMaterials: findDoubleSidedMaterials(gltfJson),
     };
 

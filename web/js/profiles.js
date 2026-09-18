@@ -6,15 +6,24 @@
 // Floor alignment tolerance never drops below this, so a tiny model exported at
 // millimetre precision isn't flagged for floating-point noise.
 const MIN_ALIGNMENT_TOLERANCE = 1e-4;
+// Compressed (Draco/meshopt) geometry can't be read in the browser, and the
+// bounding box is no stand-in for the base: a mug's handle shifts it. So for
+// those files only the Y=0 part of the rule is checked.
+const COMPRESSED_ALIGNMENT_NOTE = " The base centre in X and Z isn't checked: this file's geometry is compressed and can't be read in the browser.";
 
 function alignmentOffsets(bounds, toleranceRatio) {
   const size = Math.max(...bounds.max.map((value, axis) => value - bounds.min[axis]));
   const tolerance = Math.max(size * toleranceRatio, MIN_ALIGNMENT_TOLERANCE);
+  const floorContact = bounds.floorContact;
+  const usesFloorContact = Number.isFinite(floorContact?.minY) &&
+    Array.isArray(floorContact?.baseCentre) && floorContact.baseCentre.length >= 2 &&
+    floorContact.baseCentre.slice(0, 2).every(Number.isFinite);
   return {
     tolerance,
-    bottomY: bounds.min[1],
-    centreX: (bounds.min[0] + bounds.max[0]) / 2,
-    centreZ: (bounds.min[2] + bounds.max[2]) / 2,
+    bottomY: usesFloorContact ? floorContact.minY : bounds.min[1],
+    centreX: usesFloorContact ? floorContact.baseCentre[0] : (bounds.min[0] + bounds.max[0]) / 2,
+    centreZ: usesFloorContact ? floorContact.baseCentre[1] : (bounds.min[2] + bounds.max[2]) / 2,
+    usesFloorContact,
   };
 }
 
@@ -26,8 +35,9 @@ const COMPARATORS = {
   // Rules whose measured value is the list of offending items.
   empty: (measured) => measured.length > 0,
   aligned: (bounds, toleranceRatio) => {
-    const { tolerance, bottomY, centreX, centreZ } = alignmentOffsets(bounds, toleranceRatio);
-    return [bottomY, centreX, centreZ].some((offset) => Math.abs(offset) > tolerance);
+    const { tolerance, bottomY, centreX, centreZ, usesFloorContact } = alignmentOffsets(bounds, toleranceRatio);
+    const offsets = usesFloorContact ? [bottomY, centreX, centreZ] : [bottomY];
+    return offsets.some((offset) => Math.abs(offset) > tolerance);
   },
 };
 
@@ -78,7 +88,9 @@ function getMeasuredValue(rule, stats) {
     case 'extensions':
       return (stats.extensionsUsed || []).filter((name) => !rule.limit.includes(name));
     case 'floor_alignment':
-      return stats.bounds ?? null;
+      return stats.bounds && stats.floorContact
+        ? { ...stats.bounds, floorContact: stats.floorContact }
+        : stats.bounds ?? null;
     case 'double_sided':
       return stats.doubleSidedMaterials || [];
     default:
@@ -142,10 +154,15 @@ function buildMessage(rule, measured, violates) {
         : 'Only supported glTF extensions are used.';
     case 'floor_alignment': {
       if (measured == null) return 'Could not compute the model bounds to check alignment.';
-      if (!violates) return 'Model rests on Y=0 and is centred in X and Z.';
-      const { bottomY, centreX, centreZ } = alignmentOffsets(measured, rule.limit);
+      const { bottomY, centreX, centreZ, usesFloorContact } = alignmentOffsets(measured, rule.limit);
       const fmt = (n) => n.toFixed(3);
-      return `Bottom is at Y=${fmt(bottomY)}, centre at X=${fmt(centreX)}, Z=${fmt(centreZ)}. Floor and tabletop products must rest on Y=0 centred at the origin (wall and ceiling products align differently).`;
+      if (!usesFloorContact) {
+        return violates
+          ? `Bottom is at Y=${fmt(bottomY)}. Floor and tabletop products must rest on Y=0 (wall and ceiling products align differently).${COMPRESSED_ALIGNMENT_NOTE}`
+          : `Model rests on Y=0.${COMPRESSED_ALIGNMENT_NOTE}`;
+      }
+      if (!violates) return 'Model rests on Y=0 and its base is centred in X and Z.';
+      return `Bottom is at Y=${fmt(bottomY)}, base centre at X=${fmt(centreX)}, Z=${fmt(centreZ)}. Floor and tabletop products must rest on Y=0 centred at the origin (wall and ceiling products align differently).`;
     }
     case 'double_sided':
       return violates
