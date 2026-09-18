@@ -12,8 +12,8 @@ import { evaluateProfile } from './profiles.js';
 
 // Khronos Group's official validator (gltf-validator 2.0.0-dev.3.10), served
 // from this site rather than a CDN so all code that sees the model is in this
-// repository — see web/vendor/gltf-validator/README.md. Loaded lazily, only
-// once a file is dropped.
+// repository — see web/vendor/gltf-validator/README.md. Preloaded once the page
+// is idle (see the end of this file) so checks still work offline.
 const GLTF_VALIDATOR_MODULE_URL = '/vendor/gltf-validator/gltf-validator.js';
 
 const dropZone = document.getElementById('drop-zone');
@@ -249,3 +249,20 @@ fileInput.addEventListener('change', () => {
   if (fileInput.files?.length) handleFiles(fileInput.files);
   fileInput.value = '';
 });
+
+// Preload the validator and rule files once the page is idle, so a visitor
+// can load the page, disconnect from the network and still check a file —
+// the simplest proof that nothing is uploaded.
+const preload = () => {
+  loadValidator().catch(() => {
+    validatorPromise = null; // retry on the next check instead of caching the failure
+  });
+  loadProfiles().catch(() => {
+    profilesPromise = null;
+  });
+};
+if ('requestIdleCallback' in window) {
+  requestIdleCallback(preload, { timeout: 3000 });
+} else {
+  setTimeout(preload, 1000);
+}
